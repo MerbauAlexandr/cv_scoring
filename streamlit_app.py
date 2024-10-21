@@ -4,11 +4,11 @@ import streamlit as st
 import toml
 from parse_hh import get_candidate_info, get_job_description  # Импортируем нужные функции
 
-# Загрузка ключей из файла secrets.toml
-secrets = toml.load("Streamlit/secrets.toml")
 
-OPENAI_API_KEY = secrets.get("OPENAI_API_KEY")
-ORGANIZATION_ID = secrets.get("ORGANIZATION_ID")
+# Загрузка ключей из Streamlit Secrets
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+ORGANIZATION_ID = st.secrets["ORGANIZATION_ID"]
+
 
 # Инициализация клиента OpenAI
 client = openai.Client(api_key=OPENAI_API_KEY, organization=ORGANIZATION_ID)
