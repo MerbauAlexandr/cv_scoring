@@ -1,14 +1,17 @@
 import os
-
 import openai
 import streamlit as st
+import toml
+from parse_hh import get_candidate_info, get_job_description  # Импортируем нужные функции
 
-from parse_hh import get_candidate_info, get_job_description
+# Загрузка ключей из файла secrets.toml
+secrets = toml.load("Streamlit/secrets.toml")
 
-client = openai.Client(
-    api_key=os.getenv("OPENAI_API_KEY")
-)
+OPENAI_API_KEY = secrets.get("OPENAI_API_KEY")
+ORGANIZATION_ID = secrets.get("ORGANIZATION_ID")
 
+# Инициализация клиента OpenAI
+client = openai.Client(api_key=OPENAI_API_KEY, organization=ORGANIZATION_ID)
 
 SYSTEM_PROMPT = """
 Проскорь кандидата, насколько он подходит для данной вакансии.
@@ -34,14 +37,16 @@ def request_gpt(system_prompt, user_prompt):
 
 st.title("CV Scoring App")
 
-job_description_url = st.text_area("Enter the job description url")
-
-cv_url = st.text_area("Enter the CV url")
+# Поля для ввода ссылки на описание вакансии и резюме
+job_description_url = st.text_area("Enter the job description URL")
+cv_url = st.text_area("Enter the CV URL")
 
 if st.button("Score CV"):
     with st.spinner("Scoring CV..."):
-
+        # Получаем описание вакансии с помощью существующей функции
         job_description = get_job_description(job_description_url)
+
+        # Получаем сгенерированные данные резюме из функции в файле parse_hh.py
         cv = get_candidate_info(cv_url)
 
         st.write("Job description:")
@@ -49,6 +54,7 @@ if st.button("Score CV"):
         st.write("CV:")
         st.write(cv)
 
+        # Формируем запрос для GPT на основе вакансии и резюме
         user_prompt = f"# ВАКАНСИЯ\n{job_description}\n\n# РЕЗЮМЕ\n{cv}"
         response = request_gpt(SYSTEM_PROMPT, user_prompt)
 

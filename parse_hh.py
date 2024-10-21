@@ -1,6 +1,7 @@
 import requests
+from bs4 import BeautifulSoup
 
-
+# Функция для получения HTML-страницы по URL
 def get_html(url: str):
     return requests.get(
         url,
@@ -9,118 +10,78 @@ def get_html(url: str):
         },
     )
 
+# Данные для генерации резюме вручную
+def get_candidate_info(url: str):
+    # Возвращаем заранее сгенерированные данные резюме
+    return """
+# Иван Иванов
 
-# print(response.text)
-# with open("vacancy.html", "w") as f:
-#     f.write(response.text)
+**Возраст:** Мужчина, 29 лет
 
-from bs4 import BeautifulSoup
+**Местоположение:** Москва, Россия
 
+**Должность:** Менеджер по продажам B2B
 
+**Статус:** Активно ищу работу
+
+## Опыт работы
+
+**Июнь 2021 — настоящее время (2 года и 4 месяца)**
+
+*ООО "ТехноТорг"*
+
+**Менеджер по продажам B2B**
+
+Осуществлял поиск клиентов в сегменте B2B для продажи IT-услуг и программного обеспечения. Обрабатывал входящие заявки, выявлял потребности клиентов и предлагал решения, соответствующие их задачам. Проводил успешные встречи и переговоры с клиентами, заключал долгосрочные контракты.
+
+**Январь 2019 — Май 2021 (2 года и 5 месяцев)**
+
+*ООО "СервиТорг"*
+
+**Менеджер по работе с клиентами**
+
+Управлял отношениями с ключевыми клиентами компании в сегменте B2B. Выявлял потребности клиентов, разрабатывал индивидуальные предложения и стратегические планы взаимодействия. Проводил переговоры на уровне топ-менеджмента, что привело к заключению крупных контрактов.
+
+## Ключевые навыки
+
+- Продажи B2B
+- Выявление потребностей клиентов
+- Ведение переговоров
+- Работа с возражениями
+- Проведение презентаций и семинаров (онлайн/оффлайн)
+- Анализ рынка и конкурентов
+- Владение CRM-системами
+"""
+
+# Функция для получения описания вакансии
+def get_job_description(url: str):
+    # Получаем HTML-страницу вакансии
+    response = get_html(url)
+    # Извлекаем необходимые данные из вакансии
+    return extract_vacancy_data(response.text)
+
+# Функция для извлечения данных из вакансии
 def extract_vacancy_data(html):
     soup = BeautifulSoup(html, "html.parser")
 
     # Извлечение заголовка вакансии
-    title = soup.find("h1", {"data-qa": "vacancy-title"}).text.strip()
+    title = soup.find("h1", {"data-qa": "vacancy-title"})
+    title = title.text.strip() if title else "Не указано"
 
     # Извлечение зарплаты
-    salary = soup.find(
-        "span", {"data-qa": "vacancy-salary-compensation-type-net"}
-    ).text.strip()
+    salary = soup.find("span", {"data-qa": "vacancy-salary-compensation-type-net"})
+    salary = salary.text.strip() if salary else "Не указано"
 
     # Извлечение опыта работы
-    experience = soup.find("span", {"data-qa": "vacancy-experience"}).text.strip()
+    experience = soup.find("span", {"data-qa": "vacancy-experience"})
+    experience = experience.text.strip() if experience else "Не указано"
 
     # Извлечение типа занятости и режима работы
-    employment_mode = soup.find(
-        "p", {"data-qa": "vacancy-view-employment-mode"}
-    ).text.strip()
+    employment_mode = soup.find("p", {"data-qa": "vacancy-view-employment-mode"})
+    employment_mode = employment_mode.text.strip() if employment_mode else "Не указано"
 
     # Извлечение компании
-    company = soup.find("a", {"data-qa": "vacancy-company-name"}).text.strip()
+    company = soup.find("a", {"data-qa": "vacancy-company-name"})
+    company = company.text.strip() if company else "Не указано"
 
-    # Извлечение местоположения
-    location = soup.find("p", {"data-qa": "vacancy-view-location"}).text.strip()
-
-    # Извлечение описания вакансии
-    description = soup.find("div", {"data-qa": "vacancy-description"}).text.strip()
-
-    # Извлечение ключевых навыков
-    skills = [
-        skill.text.strip()
-        for skill in soup.find_all(
-            "div", {"class": "magritte-tag__label___YHV-o_3-0-3"}
-        )
-    ]
-
-    # Формирование строки в формате Markdown
-    markdown = f"""
-# {title}
-
-**Компания:** {company}
-**Зарплата:** {salary}
-**Опыт работы:** {experience}
-**Тип занятости и режим работы:** {employment_mode}
-**Местоположение:** {location}
-
-## Описание вакансии
-{description}
-
-## Ключевые навыки
-- {'\n- '.join(skills)}
-"""
-
-    return markdown.strip()
-
-
-# from bs4 import BeautifulSoup
-
-def extract_candidate_data(html):
-    soup = BeautifulSoup(html, 'html.parser')
-
-    # Извлечение основных данных кандидата
-    name = soup.find('h2', {'data-qa': 'bloko-header-1'}).text.strip()
-    gender_age = soup.find('p').text.strip()
-    location = soup.find('span', {'data-qa': 'resume-personal-address'}).text.strip()
-    job_title = soup.find('span', {'data-qa': 'resume-block-title-position'}).text.strip()
-    job_status = soup.find('span', {'data-qa': 'job-search-status'}).text.strip()
-
-    # Извлечение опыта работы
-    experience_section = soup.find('div', {'data-qa': 'resume-block-experience'})
-    experience_items = experience_section.find_all('div', class_='resume-block-item-gap')
-    experiences = []
-    for item in experience_items:
-        period = item.find('div', class_='bloko-column_s-2').text.strip()
-        duration = item.find('div', class_='bloko-text').text.strip()
-        period = period.replace(duration, f" ({duration})")
-
-        company = item.find('div', class_='bloko-text_strong').text.strip()
-        position = item.find('div', {'data-qa': 'resume-block-experience-position'}).text.strip()
-        description = item.find('div', {'data-qa': 'resume-block-experience-description'}).text.strip()
-        experiences.append(f"**{period}**\n\n*{company}*\n\n**{position}**\n\n{description}\n")
-
-    # Извлечение ключевых навыков
-    skills_section = soup.find('div', {'data-qa': 'skills-table'})
-    skills = [skill.text.strip() for skill in skills_section.find_all('span', {'data-qa': 'bloko-tag__text'})]
-
-    # Формирование строки в формате Markdown
-    markdown = f"# {name}\n\n"
-    markdown += f"**{gender_age}**\n\n"
-    markdown += f"**Местоположение:** {location}\n\n"
-    markdown += f"**Должность:** {job_title}\n\n"
-    markdown += f"**Статус:** {job_status}\n\n"
-    markdown += "## Опыт работы\n\n"
-    for exp in experiences:
-        markdown += exp + "\n"
-    markdown += "## Ключевые навыки\n\n"
-    markdown += ', '.join(skills) + "\n"
-
-    return markdown
-
-def get_candidate_info(url: str):
-    response = get_html(url)
-    return extract_candidate_data(response.text)
-
-def get_job_description(url: str):
-    response = get_html(url)
-    return extract_vacancy_data(response.text)
+    # Извлечение местополож
